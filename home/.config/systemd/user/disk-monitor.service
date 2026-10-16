@@ -1,0 +1,9 @@
+[Unit]
+Description=Disk space monitor with desktop notification
+Documentation=file:%h/.local/bin/disk-monitor.sh
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/disk-monitor.sh
+# Read-only monitor: no filesystem writes except its own state/log dir.
+NoNewPrivileges=true

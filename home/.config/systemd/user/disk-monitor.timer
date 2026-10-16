@@ -1,0 +1,13 @@
+[Unit]
+Description=Check disk space hourly
+Documentation=file:%h/.local/bin/disk-monitor.sh
+
+[Timer]
+# Check at the top of every hour, plus ~5 min after boot/login.
+OnCalendar=hourly
+OnStartupSec=5min
+Persistent=true
+RandomizedDelaySec=2min
+
+[Install]
+WantedBy=timers.target

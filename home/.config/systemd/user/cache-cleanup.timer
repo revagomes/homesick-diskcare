@@ -1,0 +1,14 @@
+[Unit]
+Description=Run cache-cleanup weekly
+Documentation=file:%h/.local/bin/cache-cleanup.sh
+
+[Timer]
+# Every Sunday at 03:00 local time.
+OnCalendar=Sun *-*-* 03:00:00
+# If the machine was off at 03:00, run at next boot/login instead of skipping.
+Persistent=true
+# Spread the start by up to 15 min to avoid thundering-herd on shared hosts.
+RandomizedDelaySec=15min
+
+[Install]
+WantedBy=timers.target

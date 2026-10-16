@@ -1,0 +1,16 @@
+[Unit]
+Description=Periodic safe cleanup of regenerable tool caches
+Documentation=file:%h/.local/bin/cache-cleanup.sh
+
+[Service]
+Type=oneshot
+# Low priority so it never competes with real work.
+Nice=19
+IOSchedulingClass=idle
+ExecStart=%h/.local/bin/cache-cleanup.sh
+# Hardening: the script only needs to write under $HOME.
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectControlGroups=true
+NoNewPrivileges=true
+ReadWritePaths=%h/.cache %h/.npm %h/.local/share %h/.local/state
