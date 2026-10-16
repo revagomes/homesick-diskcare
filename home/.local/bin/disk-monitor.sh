@@ -91,7 +91,7 @@ log "check: $MOUNT ${PCT}% used, ${AVAIL_G}G free (level=$LEVEL, last=$LAST, for
 case "$LEVEL" in
   crit)
     notify critical "⚠  Disk critically full — ${PCT}% used" \
-"$(printf 'Only <b>%sG</b> free on  %s\n\n<b>Largest in home:</b>\n%s\n<b>What to do:</b>\n   • run   cache-cleanup.sh\n   • move big files to:\n       /volumes/user/home/vascore' \
+"$(printf 'Only <b>%sG</b> free on  %s\n\n<b>Largest in home:</b>\n%s\nRun  cache-cleanup.sh  or free space.' \
   "$AVAIL_G" "$MOUNT" "$(biggest_hint)")"
     ;;
   warn)
