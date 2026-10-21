@@ -1,0 +1,12 @@
+[Unit]
+Description=Docker disk usage reporter with desktop notification
+Documentation=file:%h/.local/bin/docker-report.sh
+
+[Service]
+Type=oneshot
+# Low priority so it never competes with real work.
+Nice=19
+IOSchedulingClass=idle
+ExecStart=%h/.local/bin/docker-report.sh
+# Read-only reporter: it measures Docker usage and notifies, never prunes.
+NoNewPrivileges=true
