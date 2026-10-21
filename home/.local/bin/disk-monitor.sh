@@ -75,10 +75,28 @@ PCT="${PCT:-0}"; AVAIL_G="${AVAIL_G:-0}"
 # Identify the biggest offenders to make the alert actionable.
 # Emits a newline-separated bulleted list (one "size  path" per line).
 biggest_hint() {
-  # Fast, shallow scan of the usual suspects; never descends deeply.
-  # Capped at 20s so a huge home dir can't stall the alert.
-  timeout 20 du -xh --max-depth=1 "$HOME_DIR" 2>/dev/null | sort -rh | sed -n '2,4p' \
-    | awk '{printf "   • %s\t%s\n", $1, $2}'
+  # Report the biggest consumers of the MONITORED filesystem ($MOUNT), not of
+  # $HOME. On this host $HOME is a bind mount from a separate partition, so a
+  # home-dir scan would mislead when the root disk ("/") is the one filling up.
+  # Each `du -x` stays on one filesystem (does not cross mount points).
+  #
+  # Fast and shallow; never descends deeply. Capped so it can't stall the alert.
+  local scan_root="$MOUNT"
+  if [ "$MOUNT" = "/" ]; then
+    # The usual root-disk offenders. /var/lib/docker is root-owned and invisible
+    # to unprivileged du, so surface a docker-aware line when docker is usable.
+    timeout 15 du -xh --max-depth=1 /usr /var /opt 2>/dev/null \
+      | sort -rh | sed -n '1,3p' | awk '{printf "   • %s\t%s\n", $1, $2}'
+    if command -v docker >/dev/null 2>&1 && docker ps >/dev/null 2>&1; then
+      local dsz
+      dsz="$(docker system df --format '{{.Type}} {{.Size}} ({{.Reclaimable}} reclaimable)' 2>/dev/null \
+             | awk '/Volumes|Images/{print "   • docker " $0}')"
+      [ -n "$dsz" ] && printf '%s\n' "$dsz"
+    fi
+  else
+    timeout 20 du -xh --max-depth=1 "$scan_root" 2>/dev/null | sort -rh | sed -n '2,4p' \
+      | awk '{printf "   • %s\t%s\n", $1, $2}'
+  fi
 }
 
 LEVEL="ok"
@@ -91,14 +109,14 @@ log "check: $MOUNT ${PCT}% used, ${AVAIL_G}G free (level=$LEVEL, last=$LAST, for
 case "$LEVEL" in
   crit)
     notify critical "⚠  Disk critically full — ${PCT}% used" \
-"$(printf 'Only <b>%sG</b> free on  %s\n\n<b>Largest in home:</b>\n%s\nRun  cache-cleanup.sh  or free space.' \
+"$(printf 'Only <b>%sG</b> free on  %s\n\n<b>Largest on this filesystem:</b>\n%s\nRun  cache-cleanup.sh  or free space.' \
   "$AVAIL_G" "$MOUNT" "$(biggest_hint)")"
     ;;
   warn)
     # Only re-warn on transition into warn, or when forced, to avoid nagging.
     if [ "$LAST" = "ok" ] || [ "$FORCE" -eq 1 ]; then
       notify normal "Disk getting full — ${PCT}% used" \
-"$(printf '<b>%sG</b> free on  %s\n\n<b>Largest in home:</b>\n%s\nConsider cleanup soon.' \
+"$(printf '<b>%sG</b> free on  %s\n\n<b>Largest on this filesystem:</b>\n%s\nConsider cleanup soon.' \
   "$AVAIL_G" "$MOUNT" "$(biggest_hint)")"
     fi
     ;;
