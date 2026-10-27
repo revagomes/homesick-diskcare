@@ -1,0 +1,12 @@
+[Unit]
+Description=Memory pressure monitor with desktop notification
+Documentation=file:%h/.local/bin/mem-monitor.sh
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/mem-monitor.sh
+# Read-only monitor: never kills a process, never writes drop_caches.
+NoNewPrivileges=true
+# Run at idle priority so the monitor itself never adds to the pressure.
+Nice=19
+IOSchedulingClass=idle

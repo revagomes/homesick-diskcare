@@ -1,0 +1,13 @@
+[Unit]
+Description=Check memory pressure every 15 minutes
+Documentation=file:%h/.local/bin/mem-monitor.sh
+
+[Timer]
+# Memory pressure spikes fast, so check more often than disk (hourly).
+OnBootSec=3min
+OnUnitActiveSec=15min
+Persistent=true
+RandomizedDelaySec=1min
+
+[Install]
+WantedBy=timers.target
